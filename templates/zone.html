@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi, bar %}
+{% block content %}
+<h2>Zone analytics</h2>
+<p class="lede">Requests are counted against the zone where the rider was picked up.</p>
+<form class="inline" method="get">
+  <label>City<select name="city"><option value="">All cities</option>{% for c in cities %}<option{% if c == city %} selected{% endif %}>{{ c }}</option>{% endfor %}</select></label>
+  <label>Zone<select name="zone_id"><option value="">Choose…</option>
+    {% for o in options if not city or o.city == city %}<option value="{{ o.zone_id }}"{% if o.zone_id == zone_id %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select></label>
+  <button>Analyze</button>
+</form>
+{% if selected %}
+<h3>{{ selected.name }}, {{ selected.city }}</h3>
+<div class="kpis">
+  {{ kpi("Total requests", selected.requests|num, True) }}{{ kpi("Completed trips", selected.completed|num) }}{{ kpi("Cancelled trips", selected.cancelled|num) }}
+  {{ kpi("Completion rate", selected.completion_rate|pct) }}{{ kpi("Cancellation rate", selected.cancellation_rate|pct) }}
+  {{ kpi("Revenue", selected.revenue|inr) }}{{ kpi("Average fare", selected.avg_fare|inr) }}
+</div>
+<div class="two">
+  <div><h3>Demand distribution</h3><table><tr><th>Time slot</th><th class="n">Requests</th><th></th></tr>
+  {% set mx = selected.slots|map(attribute='requests')|max %}
+  {% for s in selected.slots %}<tr><td>{{ s.slot }}</td><td class="n">{{ s.requests }}</td><td>{{ bar(s.requests, mx) }}</td></tr>{% endfor %}</table></div>
+  <div><h3>Top drop-off zones</h3><table><tr><th>Zone</th><th class="n">Trips</th></tr>
+  {% for z, n in selected.top_drop_zones %}<tr><td>{{ z }}</td><td class="n">{{ n }}</td></tr>{% endfor %}</table>
+  <h3>Cancellation reasons</h3><table><tr><th>Reason</th><th class="n">Count</th></tr>
+  {% for r, n in selected.cancel_reasons %}<tr><td>{{ r }}</td><td class="n">{{ n }}</td></tr>{% else %}<tr><td colspan="2" class="muted">No cancellations.</td></tr>{% endfor %}</table></div>
+</div>
+{% endif %}
+<h3>All zones{% if city %} in {{ city }}{% endif %}</h3>
+<div class="scroll"><table><tr><th>Zone</th><th>City</th><th class="n">Requests</th><th class="n">Completed</th><th class="n">Cancelled</th><th class="n">Cancel rate</th><th class="n">Revenue</th><th class="n">Avg fare</th></tr>
+{% for r in rows %}<tr><td><a href="{{ url_for('zones', zone_id=r.zone_id, city=city) }}">{{ r.zone }}</a></td><td>{{ r.city }}</td><td class="n">{{ r.requests|num }}</td><td class="n">{{ r.completed|num }}</td><td class="n">{{ r.cancelled|num }}</td><td class="n">{{ r.cancellation_rate|pct }}</td><td class="n">{{ r.revenue|inr }}</td><td class="n">{{ r.avg_fare|inr }}</td></tr>{% endfor %}</table></div>
+{% endblock %}

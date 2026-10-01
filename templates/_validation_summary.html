@@ -1,0 +1,5 @@
+<div class="panel">
+  <strong>Data validation</strong>
+  <ul class="plain">{% for line in report.summary_lines() %}<li>{{ line }}</li>{% endfor %}</ul>
+  <p style="margin:10px 0 0"><a href="{{ url_for('validation') }}">View validation details</a></p>
+</div>

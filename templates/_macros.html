@@ -1,0 +1,5 @@
+{% macro kpi(label, value, hero=False) %}
+<div class="kpi{% if hero %} hero{% endif %}"><div class="v">{{ value }}</div><div class="l">{{ label }}</div></div>
+{% endmacro %}
+{% macro bar(value, maximum) %}<span class="bar" style="width: {{ (120 * value / maximum) if maximum else 0 }}px" aria-hidden="true"></span>{% endmacro %}
+{% macro profile(pairs) %}<dl class="profile">{% for k, v in pairs %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}</dl>{% endmacro %}

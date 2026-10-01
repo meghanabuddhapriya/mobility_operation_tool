@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi, bar %}
+{% block content %}
+<h2>Trip analytics</h2>
+<p class="lede">Demand, geography and trip shape across the whole dataset.</p>
+<div class="kpis">
+  {{ kpi("Completed trips", kpis.completed_trips|num) }}{{ kpi("Average fare", kpis.avg_fare|inr(2)) }}
+  {{ kpi("Average distance", (kpis.avg_distance|num(1)) ~ " km") }}{{ kpi("Average duration", (kpis.avg_duration|num(1)) ~ " min") }}
+  {{ kpi("Peak time slot", peak.slot, True) }}
+</div>
+<div class="two">
+<div><h3>Demand by time slot</h3>
+  <table><tr><th>Time slot</th><th class="n">Requests</th><th class="n">Share</th><th></th></tr>
+  {% set mx = slots|map(attribute='requests')|max %}
+  {% for s in slots %}<tr><td>{{ s.slot }}</td><td class="n">{{ s.requests|num }}</td><td class="n">{{ s.share|pct }}</td><td>{{ bar(s.requests, mx) }}</td></tr>{% endfor %}</table></div>
+<div><h3>By city</h3>
+  <table><tr><th>City</th><th class="n">Requests</th><th class="n">Cancelled</th><th class="n">Cancel rate</th><th class="n">Revenue</th></tr>
+  {% for c in cities %}<tr><td>{{ c.city }}</td><td class="n">{{ c.requests|num }}</td><td class="n">{{ c.cancelled|num }}</td><td class="n">{{ c.cancellation_rate|pct }}</td><td class="n">{{ c.revenue|inr }}</td></tr>{% endfor %}</table>
+  <h3>Completed trips by distance</h3>
+  <table><tr><th>Distance</th><th class="n">Trips</th><th></th></tr>
+  {% set dm = distance|map(attribute='trips')|max %}
+  {% for d in distance %}<tr><td>{{ d.bucket }}</td><td class="n">{{ d.trips|num }}</td><td>{{ bar(d.trips, dm) }}</td></tr>{% endfor %}</table></div>
+</div>
+<h3>Requests by hour of day</h3>
+<div class="scroll"><table><tr>{% for h in hours %}<th class="n">{{ h.hour[:2] }}</th>{% endfor %}</tr>
+<tr>{% for h in hours %}<td class="n">{{ h.requests }}</td>{% endfor %}</tr></table></div>
+<h3>Daily requests</h3>
+<div class="scroll" style="max-height:320px;overflow-y:auto"><table><tr><th>Date</th><th class="n">Requests</th><th class="n">Completed</th><th></th></tr>
+{% set mx2 = daily|map(attribute='requests')|max %}
+{% for d in daily %}<tr><td>{{ d.date }}</td><td class="n">{{ d.requests }}</td><td class="n">{{ d.completed }}</td><td>{{ bar(d.requests, mx2) }}</td></tr>{% endfor %}</table></div>
+{% endblock %}

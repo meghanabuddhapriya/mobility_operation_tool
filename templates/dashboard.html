@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi %}
+{% block content %}
+<h2>Dashboard</h2>
+<p class="lede">Every figure is calculated from the loaded files.</p>
+<div class="kpis">
+  {{ kpi("Total trips", kpis.total_trips|num, True) }}
+  {{ kpi("Total revenue", kpis.total_revenue|inr, True) }}
+  {{ kpi("Cancellation rate", kpis.cancellation_rate|pct, True) }}
+  {{ kpi("Completion rate", kpis.completion_rate|pct) }}
+  {{ kpi("Completed trips", kpis.completed_trips|num) }}
+  {{ kpi("Cancelled trips", kpis.cancelled_trips|num) }}
+  {{ kpi("Total drivers", kpis.total_drivers|num) }}
+  {{ kpi("Active drivers", kpis.active_drivers|num) }}
+  {{ kpi("Total riders", kpis.total_riders|num) }}
+  {{ kpi("Average fare", kpis.avg_fare|inr(2)) }}
+  {{ kpi("Average distance", (kpis.avg_distance|num(1)) ~ " km") }}
+  {{ kpi("Average duration", (kpis.avg_duration|num(1)) ~ " min") }}
+</div>
+{% include "_validation_summary.html" %}
+{% endblock %}

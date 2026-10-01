@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import profile %}
+{% block content %}
+<h2>Driver analytics</h2>
+<p class="lede">Pick a driver for a full performance profile, or scan the rankings below.</p>
+<form class="inline" method="get">
+  <label>Select driver<select name="driver_id"><option value="">Choose…</option>
+    {% for did, name in options %}<option value="{{ did }}"{% if did == driver_id %} selected{% endif %}>{{ did }} · {{ name }}</option>{% endfor %}</select></label>
+  <button>Analyze</button>
+</form>
+
+{% if selected %}
+<div class="two" style="margin-top:16px">
+  <div class="panel"><h3 style="margin-top:0">Driver performance</h3>
+  {{ profile([("Driver ID", selected.driver_id), ("Driver", selected.name), ("City", selected.city), ("Vehicle", selected.vehicle_type),
+    ("Rating", selected.rating if selected.rating is not none else "n/a"), ("Status", selected.status)]) }}</div>
+  <div class="panel"><h3 style="margin-top:0">Trips</h3>
+  {% if selected.total_trips %}
+  {{ profile([("Total trips", selected.total_trips), ("Completed", selected.completed), ("Cancelled", selected.cancelled),
+    ("Completion rate", selected.completion_rate|pct(2)), ("Cancellation rate", selected.cancellation_rate|pct(2)),
+    ("Revenue", selected.revenue|inr), ("Average fare", selected.avg_fare|inr), ("Average distance", (selected.avg_distance|num(1)) ~ " km"),
+    ("Average fare per km", selected.avg_fare_per_km|inr(2)), ("Average duration", (selected.avg_duration|num(1)) ~ " min")]) }}
+  {% else %}<p class="muted">This driver has no trips in the loaded data.</p>{% endif %}</div>
+</div>
+{% if util %}<div class="panel"><h3 style="margin-top:0">Utilization</h3>
+  {{ profile([("Online hours", util.online_hours), ("Busy hours", util.busy_hours), ("Idle hours", util.idle_hours),
+   ("Utilization", util.utilization|frac_pct), ("Category", util.category)]) }}</div>
+{% elif engine.dataset.has_activity %}<p class="muted">No usable activity events for this driver.</p>{% endif %}
+<p><a href="{{ url_for('idle', threshold=30, window=360, driver_id=selected.driver_id) }}">Idle gaps for this driver</a></p>
+{% endif %}
+
+<h3>Rankings</h3>
+<div class="two">
+  <div><table><caption class="muted" style="text-align:left">Most completed trips</caption><tr><th>Driver</th><th class="n">Completed</th></tr>
+    {% for s, v in top_completed %}<tr><td><a href="{{ url_for('drivers', driver_id=s.driver_id) }}">{{ s.driver_id }}</a> {{ s.name }}</td><td class="n">{{ v }}</td></tr>{% endfor %}</table></div>
+  <div><table><caption class="muted" style="text-align:left">Highest revenue</caption><tr><th>Driver</th><th class="n">Revenue</th></tr>
+    {% for s, v in top_revenue %}<tr><td><a href="{{ url_for('drivers', driver_id=s.driver_id) }}">{{ s.driver_id }}</a> {{ s.name }}</td><td class="n">{{ v|inr }}</td></tr>{% endfor %}</table></div>
+  <div><table><caption class="muted" style="text-align:left">Lowest cancellation rate (min 5 trips)</caption><tr><th>Driver</th><th class="n">Rate</th><th class="n">Trips</th></tr>
+    {% for s, v in low_cancel %}<tr><td><a href="{{ url_for('drivers', driver_id=s.driver_id) }}">{{ s.driver_id }}</a> {{ s.name }}</td><td class="n">{{ v|pct }}</td><td class="n">{{ s.total_trips }}</td></tr>{% endfor %}</table></div>
+  <div><table><caption class="muted" style="text-align:left">Highest utilization</caption><tr><th>Driver</th><th class="n">Utilization</th></tr>
+    {% for r in top_util %}<tr><td><a href="{{ url_for('drivers', driver_id=r.id) }}">{{ r.id }}</a> {{ r.name }}</td><td class="n">{{ r.value|pct }}</td></tr>
+    {% else %}<tr><td colspan="2" class="muted">Load a driver activity file to see this ranking.</td></tr>{% endfor %}</table></div>
+</div>
+<h3>Drivers requiring attention</h3>
+<p class="muted">Drivers with the most anomaly flags (see the Anomalies page for thresholds).</p>
+<div class="scroll"><table><tr><th>Driver</th><th class="n">Flags</th><th>Issues</th></tr>
+{% for did, issues in attention %}<tr><td><a href="{{ url_for('drivers', driver_id=did) }}">{{ did }}</a></td><td class="n">{{ issues|length }}</td><td>{{ issues|join('; ') }}</td></tr>
+{% else %}<tr><td colspan="3" class="muted">No drivers are flagged.</td></tr>{% endfor %}</table></div>
+{% endblock %}

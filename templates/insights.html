@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Operational insights</h2>
+<p class="lede">Generated from the loaded data each time; nothing here is hardcoded.</p>
+<ol class="insights">{% for line in insights %}<li>{{ line }}</li>{% endfor %}</ol>
+{% endblock %}

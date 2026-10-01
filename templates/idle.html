@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi %}
+{% block content %}
+<h2>Idle time between trips</h2>
+<p class="lede">Each driver's completed trips are sorted by pickup time; the gap from one trip's drop to the next pickup is an idle gap. Gaps longer than the window are treated as off-shift time, not idling.</p>
+<form class="inline" method="get">
+  <label>Idle threshold (minutes)<input type="number" name="threshold" value="{{ params.threshold }}" min="0" step="1" required style="min-width:120px"></label>
+  <label>Off-shift window (minutes)<input type="number" name="window" value="{{ params.window }}" min="1" step="1" required style="min-width:120px"></label>
+  <label>Driver (optional)<input type="text" name="driver_id" value="{{ params.driver_id }}" placeholder="D102" style="min-width:110px"></label>
+  <button>Analyze</button>
+</form>
+{% if result %}
+<div class="kpis" style="margin-top:16px">
+  {{ kpi("Significant idle gaps", result.total_significant|num, True) }}{{ kpi("Drivers affected", result.drivers_affected|num) }}
+  {{ kpi("Average gap", (result.avg_gap_min|num(1)) ~ " min") }}{{ kpi("Trip pairs examined", result.pairs_examined|num) }}
+  {{ kpi("Overlapping trips skipped", result.overlaps|num) }}{{ kpi("Off-shift gaps skipped", result.off_shift|num) }}
+</div>
+<div class="two">
+<div><h3>Longest gaps</h3>
+<div class="scroll" style="max-height:520px;overflow-y:auto"><table><tr><th>Driver</th><th>Previous trip</th><th>Next trip</th><th class="n">Idle time</th></tr>
+{% for g in result.gaps %}<tr><td>{{ g.driver_id }} {{ g.driver_name }}</td><td>{{ g.prev_trip }} <span class="muted">{{ g.prev_drop.strftime('%d %b %H:%M') }}</span></td><td>{{ g.next_trip }} <span class="muted">{{ g.next_pickup.strftime('%d %b %H:%M') }}</span></td><td class="n">{{ g.minutes|num(0) }} min</td></tr>
+{% else %}<tr><td colspan="4" class="muted">No idle gaps at this threshold.</td></tr>{% endfor %}</table></div></div>
+<div><h3>Drivers with the most idle time</h3>
+<table><tr><th>Driver</th><th class="n">Gaps</th><th class="n">Total</th><th class="n">Longest</th></tr>
+{% for d in result.per_driver %}<tr><td>{{ d.driver_id }} {{ d.name }}</td><td class="n">{{ d.gaps }}</td><td class="n">{{ d.total_min|num }} min</td><td class="n">{{ d.longest_min|num }} min</td></tr>{% endfor %}</table></div>
+</div>
+{% endif %}
+{% endblock %}

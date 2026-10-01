@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi, bar %}
+{% block content %}
+<h2>Driver utilization</h2>
+{% if not available %}
+<p class="lede">No driver activity file was loaded, so utilization cannot be calculated. Load a file with driver_id, timestamp and status columns.</p>
+{% else %}
+<p class="lede">Utilization is busy time divided by online time, measured from each driver's Online / Busy / Idle / Offline event log.</p>
+<form class="inline" method="get">
+  <label>High at or above (%)<input type="number" name="high" value="{{ (th.high*100)|round(1) }}" min="0" max="100" step="1" style="min-width:110px"></label>
+  <label>Low below (%)<input type="number" name="low" value="{{ (th.low*100)|round(1) }}" min="0" max="100" step="1" style="min-width:110px"></label>
+  <button>Apply thresholds</button>
+</form>
+<div class="kpis">
+  {{ kpi("Drivers measured", summary.drivers_measured|num) }}{{ kpi("Average utilization", summary.avg_utilization|frac_pct, True) }}
+  {{ kpi("High", summary.counts.High) }}{{ kpi("Medium", summary.counts.Medium) }}{{ kpi("Low", summary.counts.Low) }}
+  {{ kpi("No activity data", summary.drivers_without_activity|num) }}
+</div>
+<div class="tabs">
+  {% set q = {'high': (th.high*100)|round(1), 'low': (th.low*100)|round(1)} %}
+  <a href="{{ url_for('utilization', high=q.high, low=q.low) }}"{% if not category %} aria-current="page"{% endif %}>All</a>
+  {% for c in ['High','Medium','Low'] %}<a href="{{ url_for('utilization', high=q.high, low=q.low, category=c) }}"{% if category == c %} aria-current="page"{% endif %}>{{ c }}</a>{% endfor %}
+</div>
+<div class="scroll"><table><tr><th>Driver</th><th class="n">Online hrs</th><th class="n">Busy hrs</th><th class="n">Idle hrs</th><th class="n">Utilization</th><th>Category</th></tr>
+{% for r in records %}<tr><td><a href="{{ url_for('drivers', driver_id=r.driver_id) }}">{{ r.driver_id }}</a> {{ r.name }}</td><td class="n">{{ r.online_hours }}</td><td class="n">{{ r.busy_hours }}</td><td class="n">{{ r.idle_hours }}</td>
+<td class="n">{{ r.utilization|frac_pct }} {{ bar(r.utilization, 1) }}</td><td><span class="tag {{ r.category }}">{{ r.category }}</span></td></tr>{% endfor %}</table></div>
+{% if shown > records|length %}<p class="muted">Showing the first {{ records|length }} of {{ shown }} drivers.</p>{% endif %}
+{% endif %}
+{% endblock %}

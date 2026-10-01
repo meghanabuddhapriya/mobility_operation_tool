@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Cancellation analysis</h2>
+<p class="lede">{{ total|num }} cancelled trips ({{ rate|pct }} of all requests).</p>
+<table style="max-width:520px"><tr><th>Reason</th><th class="n">Count</th><th class="n">Share</th></tr>
+{% for r in reasons %}<tr><td>{{ r.reason }}</td><td class="n">{{ r.count|num }}</td><td class="n">{{ r.share|pct }}</td></tr>{% else %}<tr><td colspan="3" class="muted">There are no cancelled trips.</td></tr>{% endfor %}</table>
+<div class="tabs" role="tablist">
+  {% for v, label in [('reason','By reason'),('zone','By zone'),('driver','By driver'),('time','By time')] %}
+  <a href="{{ url_for('cancellations', view=v) }}"{% if v == view %} aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+</div>
+<div class="scroll"><table>
+{% if view == 'reason' %}<tr><th>Reason</th><th class="n">Count</th><th class="n">Share</th></tr>
+  {% for r in rows %}<tr><td>{{ r.reason }}</td><td class="n">{{ r.count }}</td><td class="n">{{ r.share|pct }}</td></tr>{% endfor %}
+{% elif view == 'zone' %}<tr><th>Zone</th><th>City</th><th class="n">Requests</th><th class="n">Cancelled</th><th class="n">Rate</th></tr>
+  {% for r in rows %}<tr><td>{{ r.zone }}</td><td>{{ r.city }}</td><td class="n">{{ r.requests }}</td><td class="n">{{ r.cancelled }}</td><td class="n">{{ r.rate|pct }}</td></tr>{% endfor %}
+{% elif view == 'driver' %}<tr><th>Driver</th><th>Name</th><th class="n">Trips</th><th class="n">Cancelled</th><th class="n">Rate</th><th>Most common reason</th></tr>
+  {% for r in rows %}<tr><td><a href="{{ url_for('drivers', driver_id=r.driver_id) }}">{{ r.driver_id }}</a></td><td>{{ r.name }}</td><td class="n">{{ r.trips }}</td><td class="n">{{ r.cancelled }}</td><td class="n">{{ r.rate|pct }}</td><td>{{ r.top_reason }}</td></tr>{% endfor %}
+{% else %}<tr><th>Time slot</th><th class="n">Requests</th><th class="n">Cancelled</th><th class="n">Rate</th></tr>
+  {% for r in rows %}<tr><td>{{ r.slot }}</td><td class="n">{{ r.requests }}</td><td class="n">{{ r.cancelled }}</td><td class="n">{{ r.rate|pct }}</td></tr>{% endfor %}
+{% endif %}</table></div>
+{% if view == 'driver' %}<p class="muted">Showing the 50 drivers with the most cancellations.</p>{% endif %}
+{% endblock %}

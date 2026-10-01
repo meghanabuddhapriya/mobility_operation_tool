@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Mobility Operations Intelligence{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand">
+    <h1>Mobility Operations Intelligence</h1>
+    {% if engine %}<span class="src">{{ engine.source }}: {{ engine.dataset.trips|length|num }} trips, {{ engine.dataset.drivers|length|num }} drivers
+      <form method="post" action="{{ url_for('reset') }}" style="display:inline"><button class="quiet" style="padding:2px 10px">Clear data</button></form></span>{% endif %}
+  </div>
+  <nav aria-label="Main">
+    {% set links = [('index','Load data'),('dashboard','Dashboard'),('trips','Trips'),('drivers','Drivers'),('zones','Zones'),('topk','Top-K'),
+                    ('cancellations','Cancellations'),('utilization','Utilization'),('idle','Idle time'),('anomalies','Anomalies'),
+                    ('search','Search'),('insights','Insights')] %}
+    {% for ep, label in links %}<a href="{{ url_for(ep) }}"{% if request.endpoint == ep %} aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+  </nav>
+</div></header>
+<main><div class="wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}<div class="flash {{ cat }}" role="alert">{{ msg }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</div></main>
+</body>
+</html>

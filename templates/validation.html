@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Validation details</h2>
+<p class="lede">Rows marked <span class="tag dropped">dropped</span> were excluded from analysis. Other rows were kept and flagged.</p>
+{% include "_validation_summary.html" %}
+<form class="inline" method="get">
+  <label>Dataset<select name="dataset"><option value="">All</option>
+    {% for d in ['drivers','trips','activity'] %}<option value="{{ d }}"{% if d == dataset %} selected{% endif %}>{{ d|capitalize }}</option>{% endfor %}</select></label>
+  <label>Issue type<select name="category"><option value="">All</option>
+    {% for (ds, cat), n in report.counts().items() %}<option value="{{ cat }}"{% if cat == category %} selected{% endif %}>{{ ds }}: {{ cat }} ({{ n }})</option>{% endfor %}</select></label>
+  <button>Filter</button>
+</form>
+<h3>{{ total_issues|num }} issue{{ '' if total_issues == 1 else 's' }}{% if total_issues > issues|length %} (showing first {{ issues|length }}){% endif %}</h3>
+{% if issues %}
+<div class="scroll"><table>
+  <tr><th>Dataset</th><th>CSV line</th><th>Record</th><th>Issue</th><th>Detail</th><th>Action</th></tr>
+  {% for i in issues %}<tr><td>{{ i.dataset }}</td><td>{{ i.line }}</td><td>{{ i.record_id }}</td><td>{{ i.category }}</td><td>{{ i.message }}</td><td><span class="tag {{ i.action }}">{{ i.action }}</span></td></tr>{% endfor %}
+</table></div>
+{% else %}<p class="muted">No issues match this filter.</p>{% endif %}
+{% endblock %}

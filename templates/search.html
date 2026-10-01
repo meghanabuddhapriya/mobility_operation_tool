@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import profile %}
+{% block content %}
+<h2>Search</h2>
+<p class="lede">Lookups go straight to a hash index, so they take the same time on 5,000 records or 5 million.</p>
+<form class="inline" method="get">
+  <label>Search type<select name="type">{% for k, label in types %}<option value="{{ k }}"{% if k == kind %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  <label>Search for<input type="text" name="q" value="{{ query }}" placeholder="D102, T1021, R2044, Koramangala" required></label>
+  <button>Search</button>
+</form>
+{% if outcome %}
+  {% if not outcome.found %}
+  <div class="panel"><strong>No {{ outcome.kind }} matches “{{ outcome.query }}”.</strong><p class="muted" style="margin:6px 0 0">Check the ID and the search type. IDs are not case-sensitive.</p></div>
+  {% else %}{% set r = outcome.result %}
+    {% if outcome.kind == 'driver' %}
+      <div class="panel">{{ profile([("Driver ID", r.profile.driver_id), ("Driver", r.profile.name), ("City", r.profile.city), ("Vehicle", r.profile.vehicle_type),
+        ("Rating", r.profile.rating if r.profile.rating is not none else "n/a"), ("Status", r.profile.status), ("Trips", r.stats.total_trips),
+        ("Completed / cancelled", r.stats.completed ~ " / " ~ r.stats.cancelled), ("Revenue", r.stats.revenue|inr)]) }}
+        <p style="margin-bottom:0"><a href="{{ url_for('drivers', driver_id=r.profile.driver_id) }}">Open full driver analytics</a></p></div>
+      <h3>Most recent trips</h3>{% set rows = r.recent_trips %}
+    {% elif outcome.kind == 'trip' %}
+      <div class="panel">{{ profile([("Trip ID", r.trip.trip_id), ("Status", r.trip.status), ("Driver", r.trip.driver_id or "none"), ("Rider", r.trip.rider_id or "none"),
+        ("City", r.trip.city), ("Route", r.trip.pickup_zone ~ " to " ~ r.trip.drop_zone), ("Requested", r.trip.request_time), ("Pickup", r.trip.pickup_time or "n/a"),
+        ("Drop", r.trip.drop_time or "n/a"), ("Duration", (r.trip.duration_min ~ " min") if r.trip.duration_min is not none else "n/a"),
+        ("Distance", r.trip.distance_km ~ " km"), ("Fare", r.trip.fare), ("Fare per km", (r.fare_per_km|inr(2)) if r.fare_per_km is not none else "n/a"),
+        ("Cancellation reason", r.trip.cancellation_reason or "none")]) }}</div>{% set rows = [] %}
+    {% elif outcome.kind == 'zone' %}
+      <table><tr><th>Zone ID</th><th>Zone</th><th>City</th><th class="n">Requests</th></tr>
+      {% for z in r.zones %}<tr><td><a href="{{ url_for('zones', zone_id=z.zone_id) }}">{{ z.zone_id }}</a></td><td>{{ z.name }}</td><td>{{ z.city }}</td><td class="n">{{ z.requests }}</td></tr>{% endfor %}</table>{% set rows = [] %}
+    {% else %}
+      <div class="panel">Rider <strong>{{ r.rider_id }}</strong> has {{ r.trip_count }} trip{{ '' if r.trip_count == 1 else 's' }}.</div><h3>Most recent trips</h3>{% set rows = r.trips %}
+    {% endif %}
+    {% if rows %}<div class="scroll"><table><tr><th>Trip</th><th>Requested</th><th>Zone</th><th>Status</th><th class="n">Fare</th><th>Reason</th></tr>
+    {% for t in rows %}<tr><td><a href="{{ url_for('search', type='trip', q=t.trip_id) }}">{{ t.trip_id }}</a></td><td>{{ t.request_time }}</td><td>{{ t.pickup_zone }}</td><td>{{ t.status }}</td><td class="n">{{ t.fare }}</td><td>{{ t.cancellation_reason }}</td></tr>{% endfor %}</table></div>{% endif %}
+  {% endif %}
+{% endif %}
+{% endblock %}

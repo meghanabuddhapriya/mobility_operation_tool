@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Load data</h2>
+<p class="lede">Upload the drivers and trips files (driver activity is optional but enables utilization and idle-time views), or start with the bundled sample dataset.</p>
+
+{% if failed_report %}
+<div class="panel" role="alert">
+  <strong>The data could not be loaded.</strong>
+  <ul>{% for msg in failed_report.fatal %}<li>{{ msg }}</li>{% endfor %}</ul>
+  <p class="muted">Fix the file and upload it again. Column names are not case-sensitive; every required column must be present.</p>
+</div>
+{% endif %}
+
+<div class="two">
+<form class="panel" method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+  <h3 style="margin-top:0">Upload CSV files</h3>
+  {% for name, label, required in fields %}
+  <label style="margin-bottom:12px">{{ label }}{% if not required %} (optional){% endif %}
+    <input type="file" name="{{ name }}" accept=".csv,text/csv"{% if required %} required{% endif %}>
+  </label>
+  {% endfor %}
+  <button type="submit">Load data</button>
+</form>
+<form class="panel" method="post" action="{{ url_for('load_sample') }}">
+  <h3 style="margin-top:0">Use the sample dataset</h3>
+  <p class="muted">250 drivers, 4,500 trips and about 16,500 activity events across Bangalore, Mumbai and Delhi, with deliberate data problems so validation and anomaly detection have something to find.</p>
+  <button type="submit">Load sample data</button>
+</form>
+</div>
+<div class="panel muted"><strong>Expected columns</strong><br>
+Drivers: driver_id, driver_name, city, vehicle_type, rating, status<br>
+Trips: trip_id, driver_id, rider_id, city, pickup_zone, drop_zone, request_time, pickup_time, drop_time, distance_km, fare, status, cancellation_reason<br>
+Activity: driver_id, timestamp, status (Online, Busy, Idle, Offline)</div>
+{% endblock %}
